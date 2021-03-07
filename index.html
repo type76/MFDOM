@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, shrink-to-fit=0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <title>type76</title>
+  <style>
+    article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section,summary{display:block}audio,canvas,video{display:inline-block}audio:not([controls]){display:none;height:0}[hidden],template{display:none}html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}a{background:transparent}a:focus{outline:thin dotted}a:active,a:hover{outline:0}h1{font-size:2em;margin:.67em 0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:bold}dfn{font-style:italic}hr{box-sizing:content-box;height:0}mark{background:#ff0;color:#000}code,kbd,pre,samp{font-family:monospace,serif;font-size:1em}pre{white-space:pre-wrap}q{quotes:"\201C" "\201D" "\2018" "\2019"}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-0.5em}sub{bottom:-0.25em}img{border:0}svg:not(:root){overflow:hidden}figure{margin:0}fieldset{border:1px solid #c0c0c0;margin:0 2px;padding:.35em .625em .75em}legend{border:0;padding:0}button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}button,input{line-height:normal}button,select{text-transform:none}button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}button[disabled],html input[disabled]{cursor:default}input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}input[type="search"]{-webkit-appearance:textfield;box-sizing:content-box}input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration{-webkit-appearance:none}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}textarea{overflow:auto;vertical-align:top}table{border-collapse:collapse;border-spacing:0}@font-face {
+    font-family: monospace;
+    font-weight: normal;
+    font-style: normal;
+}
+
+.container a {text-decoration: none; text-transform:uppercase;}
+    
+body {font-family: monospace; 
+margin: 20px auto 20px auto;
+color: #333;
+width: 100%;
+max-width: 500px;
+background:#eee url(css/76logo.png) 0 0 no-repeat;
+text-align: center;
+}
+body.dark {  
+  animation-delay: 0.4s;
+  animation: inv 0.4s forwards;
+}
+body.dark header {  
+color: #eee;
+}
+
+@keyframes inv {
+  from {color: #333;
+  background-color: #eee;}
+  to {color: #eee;
+    background-color: #333;}
+}
+body.dark a {color: orange; background-color:#000;}
+
+li {list-style-type:none;}
+    
+.header {
+margin: 1em 0 1em 0;
+font-size: 2em;
+color: #333;
+}
+
+.header .name {margin-left: 12px;}
+
+.container {
+display: block;
+max-width: 500px;
+}
+
+.container header {
+display: block;
+font-size: 1.2em;
+}
+
+.container ul {
+margin: 0; padding: 1em 0;
+line-height: 1.8em;
+}
+.container ul li {
+margin: 2em 0;
+}
+.container ul li span {
+margin-left:5px;
+    }
+
+.container ul li a {
+background: transparent;
+}
+
+
+.container ul li a img {
+padding: 4px;
+background: #fff;
+display: block;
+width: 90%;
+height: auto;
+margin: 0 auto;
+}
+
+.container ul li a:hover img {
+  background: #ccc;
+}
+
+
+
+.container ul li:hover,
+ul.projects {
+list-style: none;
+}
+
+#interface {position: absolute;
+top: 20px; right: 20px;}
+
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #eee;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: #333;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+
+#switchValue:checked + .slider {
+  background-color: #333;
+}
+
+#switchValue:focus + .slider {
+  box-shadow: 0 0 1px #ccc;
+  }
+
+#switchValue:checked + .slider.round:before {
+    background-color: #eee !important;
+}
+
+#switchValue:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+    background-color: #eee;
+}
+
+#footer { line-height: 2em; }
+#footer:before { 
+  content: '--';
+  display: block;
+  line-height: 2em; }
+  </style>
+</head>
+<body>
+<div id="interface">
+<label class="switch">
+  <input id="switchValue" type="checkbox" checked oninput="invert()">
+  <span class="slider round"></span>
+</label>
+</div><!-- interface -->
+
+<div class="header">
+  <header class="name">Type76</header>
+</div><!-- header -->
+
+<div class="container">
+<header class="name">javascript experiments</header>
+
+
+<ul class="projects">
+
+<li><a href="projects/drive/">drive <img src="projects/img/drive.jpg" alt="vehicle on wireframe track"></a><span>Basic driving game prototype</span></li>
+
+<li><a href="projects/baobab/">baobab <img src="projects/img/baobab.jpg" alt="black tree">
+</a><span>Audio generation with 3D feedback (toggle the switch)</span></li>
+
+<li><a href="projects/tent/">tent <img src="projects/img/tent.jpg" alt="3D rendered tent">
+  </a><span>Tent configuration web app</span></li>
+
+<li><a href="projects/loop/">loop <img src="projects/img/loop.jpg" alt="interlocking random words">
+</a><span>Random word cloud with audio loop<br> (click the square to play)[nsfw]</span></li>
+
+<li><a href="projects/earth/">earth <img src="projects/img/earth.jpg" alt="pixellated globe">
+</a><span>Globe UI</span></li>
+
+<li><a href="projects/bot/">bot <img src="projects/img/bot.jpg" alt="2D cartoon face">
+</a><span>Animated 2D lip sync generated from text</span></li>
+
+<li><a href="projects/lipsync/">lipsync <img src="projects/img/lipsync.jpg" alt="3D cartoon face">
+</a><span>Animated 3D lip sync generated from text</span></li>
+
+<li><a href="projects/destroy/">destroy <img src="projects/img/destroy.jpg" alt="3D St.Basils Cathedral">
+</a><span>Do not press the red button.</span></li>
+
+<li><a href="projects/spider/">spider <img src="projects/img/spider.jpg" alt="3D spider">
+</a><span>Spider walk experiment.</span></li>
+
+<li><a href="projects/web/">web <img src="projects/img/web.jpg" alt="3D spider on web">
+</a><span>Spider game experiment.</span></li>
+
+<li><a href="projects/hover/">hover <img src="projects/img/flydrive.jpg" alt="hover car">
+</a><span>Fly/drive game experiment.</span></li>
+
+
+</ul>
+
+
+</div><!-- container -->
+
+<div id="footer">
+  <p>These are all experiments, projects and sketches made for fun. All javascript and open source, made from open source ideas. I encourage you to get in touch if you have any interest in these things. If you want me to comment or explain something in a bit more detail. If you want to build on something or do something new. I'm open to any and all ideas.</p>
+  <p>Contact : <a href="mailto:contact@io76.com">contact@io76.com</a>.</p>
+  <p><a href="http://io76.com">My work.</a></p>
+<br>
+  <p>Soon to be thumbnails added to this list:</p>
+  <ul>
+    <li><a href="https://type76.com/projects/codepad/">a code pad for starting sketches</a></li>
+    <li><a href="https://type76.com/projects/codepad/three.html">three.js starter</a></li>
+    <li><a href="https://type76.com/fluid/v2.html">experiments with fluids</a></li>
+    <li><a href="https://type76.com/spyhunter/saturday.html">spyhunter game</a></li>
+    <li><a href="https://type76.com/platfomer/index4.html">spider game</a></li>
+  </ul>
+  
+</div>
+
+<script>
+// button
+function invert() {
+ document.getElementById("switchValue").classList.toggle('on');
+  if (document.getElementById("switchValue").classList != "on") {
+    document.body.classList = '';
+  } else {
+    document.body.classList = 'dark';
+    }
+
+  }
+
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,523 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>globe</title>
+    <style>
+    html, body {background:#000;  margin: 0; padding: 0;}
+    body {
+        font-family: 'sans-serif', monospace;
+        text-transform: lowercase;
+        font-size: 15px; 
+        cursor: crosshair;
+        height:100%;
+        overflow: hidden;
+    }
+    #hud, #sdrhud {
+        position: absolute; top:20px; left:10px; color: #fff;
+        display: block;
+        padding: 10px;
+    }
+    #sdrhud {display: block; top:auto; bottom:20px; border-bottom: red 2px solid;}
+    button, span {display: inline-block;
+        background: transparent;
+        border: none; outline: none;
+        color: #fff; }
+        #spdhud {color: #fff;}
+        #hud {transform: scale(0.8); }
+        #hud button {width: 64px; height: 64px;  padding: 0;
+            border: #000 2px solid; cursor: pointer; border-radius: 64px;}
+            #hud button:focus {border: #fff 2px solid;}
+            #hud button:hover {border: #ccc 2px solid;}
+            button#tex {text-indent: -10000em;position: relative;}
+            button#tex {background: url(lookup_128.png) 0 0 no-repeat;}
+            button#tex.on {background: url(col_128.png) 0 0 no-repeat;}
+
+            button#tex:before {
+                text-indent: 0;
+                content: '2D';
+                display: block;
+                position: absolute;
+                top: -1em;
+                color: #fff;
+                top: -20px;
+                left: 1px;
+                height: 15px;
+                width:60px;
+                text-align: center;
+            }
+            button#tex.on:before {
+                content: '3D';
+                display: block;
+                position: absolute;
+            }
+            #fxhud, #xhp {position: absolute; top: 10px; right: 10px; background: red;}
+            #fxhud p {padding: 0; margin: 0;}
+            #xhp {top: auto; bottom: 10px;}
+            #gobf {background: #222;}
+        </style>
+    </head>
+
+    <body>    
+<p id="xhp">6</p>
+<div id="sdrhud"></div>
+<div><div id="fxhud"></div></div>
+
+<div id="hud">
+    <button onclick="createmarker()" id="gobf">+</button>
+    <button id="tex" title="toggle display">texture</button>
+</div>
+
+<canvas id="2dcanvas" width="128" height="64" style="width:128px; height: 64px; position: absolute; top:40px; right:80px; transform: scale(2); display: none; " ></canvas>
+
+
+<canvas id="fx" width="128" height="64" style="width:128px; height: 64px; position: absolute; top:175px; right:80px; transform: scale(2); display: none; background:rgba(255,255,255,1); "></canvas>
+
+
+
+<script src="../js/three.min.js"></script>
+<script src="../js/OrbitControls.min.js"></script>
+
+<script>
+" use strict ";
+var locations = [];
+//GET JSON DATA
+var request = new XMLHttpRequest();
+request.open('GET', "locations.json");
+request.responseType = 'json';
+request.send(); 
+request.onload = function() {
+    locations = request.response;
+} 
+
+// canvas vars
+var canvas = document.getElementById('2dcanvas'),
+ctx = canvas.getContext('2d');
+var img = new Image();
+img.src = 'lookup_128.png';
+
+
+var fximg = new Image();
+fximg.src = 'bw_128.png';
+
+//fx overlay
+var fxol = document.getElementById('fx'),
+fcx = fxol.getContext('2d');
+var iamhere = 0;
+var myhp = 6;
+var herehp = 0; // current country hp
+var xu = 32; //cursor 2D.x pos
+var xv = 32; //cursor 2D.y pos
+var radius = 15.21;
+var last = 0;
+var caneffect = true;
+var i = 0;
+var marknum = 0;
+
+//set myhp
+xhp.innerHTML = 'myhp: '+myhp;
+
+
+function changeCanvas() {
+    ctx.drawImage(img, 0, 0);
+    texData = ctx.getImageData(0, 0, 128, 64);
+    ctx.fillStyle = "red";
+    ctx.fillRect(xu, xv, 1, 1);      
+    ctx.drawImage(fxol,0,0);
+}//end changecanvas
+
+
+// threejs
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50);
+camera.position.z = 30;
+var renderer = new THREE.WebGLRenderer( { alpha: true, antialias: true } );
+renderer.setClearColor( 0xff0000, 0 );
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// controls
+var orbit = new THREE.OrbitControls(camera, renderer.domElement);
+orbit.enableZoom = false;
+orbit.zoomSpeed = 1.2;
+orbit.panSpeed = 0.8;
+orbit.minDistance = 20;
+orbit.maxDistance = 50;
+orbit.enableZoom = true;
+orbit.enablePan = false;
+
+//globe
+earthgroup = new THREE.Group();
+earthgroup.visible = false; 
+scene.add( earthgroup );
+
+//sun pivot
+sunpvt = new THREE.Object3D();
+sunpvt.position.set( 0, 0, 0 );
+scene.add( sunpvt );
+
+//on click pivot
+pvt = new THREE.Object3D();
+pvt.position.set( 0, 0, 0 );
+pvt.lookAt( 0, 300, 0 )
+scene.add( pvt );
+
+//cursor pivot
+cursorpvt = new THREE.Object3D();
+cursorpvt.position.set( 0, 0, 0 );
+cursorpvt.lookAt( 0, 300, 0 )
+scene.add( cursorpvt );
+
+// camera pointer
+campoint = new THREE.Object3D();
+campoint.position.set(0,0,15);
+pvt.add( campoint );
+
+// markers
+markers = new THREE.Group();
+markers.name = "markers"
+scene.add( markers );
+
+
+// marker 3D object
+var mrkmat = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+mrkr = new THREE.Mesh( new THREE.BoxBufferGeometry( 0.7, 0.7, 0.7 ), mrkmat );
+scene.add( mrkr );
+
+
+// earth colour
+var earthtexture = new THREE.TextureLoader().load( 'assets/earth_atmos_2048.jpg' );
+
+var earthbump = new THREE.TextureLoader().load( 'assets/Earth-Elevation-Bump-Map.png' );
+
+earthtexture.magFilter = THREE.NearestFilter;
+earthtexture.minFilter = THREE.LinearMipMapLinearFilter;
+var earthmesh = new THREE.Object3D();
+var d = {
+    radius : radius,
+    widthSegments : 30,
+    heightSegments : 30
+};
+var material =  new THREE.MeshStandardMaterial( { 
+    bumpMap    :  earthbump,
+    bumpScale  :  0.2,
+    map: earthtexture
+    , metalness: 0.5
+} );
+
+var geometry = new THREE.SphereGeometry( d.radius, d.widthSegments, d.heightSegments );
+var earthmesh = new THREE.Mesh(
+    geometry,material
+    );
+earthmesh.name = "earthmesh";
+earthmesh.receiveShadow = true;
+scene.add( earthmesh );
+
+
+
+//cursor pointer
+var geometry = new THREE.BoxGeometry( 0.2, 0.2, 4 );
+var material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+var cube = new THREE.Mesh( geometry, material );
+cube.name = 'pointer';
+cube.position.set(0,0,16);
+cursorpvt.add( cube );
+
+
+// lights
+var light = new THREE.PointLight( 0xffffff, 0.6, 10 );
+light.position.set( 0, 0, 20 );
+cursorpvt.add( light );
+
+var sunlight = new THREE.PointLight( 0xffffff, 1.5, 200 );
+sunlight.position.set( 0, 0, 90 );
+sunpvt.add( sunlight );
+
+var amlight = new THREE.AmbientLight( 0xffffff );
+scene.add( amlight );
+var am2light = new THREE.AmbientLight( 0xffffff );
+scene.add( am2light );
+
+
+// raycaster
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+var mesh = new THREE.Object3D();
+
+
+// earth 2D
+var d = {
+    radius: 15,
+    widthSegments: 30,
+    heightSegments: 30
+};
+texture = new THREE.Texture(canvas);
+texture.magFilter = THREE.NearestFilter;
+texture.minFilter = THREE.LinearMipMapLinearFilter;
+var geometry = new THREE.SphereGeometry(d.radius, d.widthSegments, d.heightSegments);
+var material = new THREE.MeshBasicMaterial({    map: texture    });
+var mesh = new THREE.Mesh(geometry, material);
+mesh.name = "earthgroup"   
+scene.add(mesh);
+
+
+
+
+//RENDER
+var requestId;
+var render = function() {
+i++; //ticker
+sunpvt.rotation.y = 0.001*i; // rotate sun
+changeCanvas();
+texture.needsUpdate = true;
+requestAnimationFrame(render);
+renderer.render(scene, camera);
+startanim();
+};  //END RENDER
+
+function startanim() {
+    if (!requestId) {
+        requestId = window.requestAnimationFrame(render);
+    }
+}
+
+function stopanim() {
+    if (requestId) {
+        window.cancelAnimationFrame(requestId);
+        requestId = undefined;
+    }
+}
+
+window.addEventListener('resize', function() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}, false);
+
+
+
+//on doc mousedown
+window.addEventListener('mousedown', function(event) {
+    clientClickX = event.clientX;
+    clientClickY = event.clientY;
+}, false);
+
+
+//on doc mouseup
+window.addEventListener('mouseup', function (ev){
+    if (ev.target == renderer.domElement) {
+        var x = ev.clientX;
+        var y = ev.clientY;
+        if( x != clientClickX || y != clientClickY )
+            return;
+
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+        raycaster.setFromCamera( mouse, camera );
+        var intersects = raycaster.intersectObject( mesh );
+        if (intersects.length > 0) {
+            pvt.lookAt( intersects[0].point );
+            xu = Math.floor(intersects[0].uv.x*128);
+            xv = -(Math.floor(intersects[0].uv.y*64)-63);
+            var index = (Math.floor(xv) * 128 + Math.floor(xu)) * 4;
+            var r = texData.data[index];
+            herehp = locations[r].stats.hp;
+            iamhere = r;
+            sdrhud.innerHTML = '';
+            var myP = document.createElement('p');
+            myP.textContent = 'name: '+locations[r].name;
+            sdrhud.appendChild(myP);
+            var my2P = document.createElement('p');
+            my2P.id = 'cntryhp';
+            my2P.textContent = 'hp: '+locations[r].stats.hp;
+            sdrhud.appendChild(my2P);
+
+            fcxData = fcx.getImageData(xu, xv, 1, 1);
+            checkfx(fcxData.data[0]);
+            // rotate cursor pivot
+            cursorpvt.rotation.set(pvt.rotation.x, pvt.rotation.y, pvt.rotation.z);
+        } 
+
+    }
+}, false);
+
+
+render();
+
+
+// check fx lookup table for effect
+function checkfx(r) {
+if (r===165) {
+// if xy pos of marker = cursor, show data
+for (var i=0; i < playermrks.length; i++) {
+    if (playermrks[i].cx === xu && playermrks[i].cy === xv) {
+        fxhud.innerHTML =  '';
+        var myP = document.createElement('p');
+        myP.textContent = 'name: '+playermrks[i].name;
+        fxhud.appendChild(myP);
+        var my2P = document.createElement('p');
+        my2P.id = 'mkhp';
+        my2P.textContent = 'hp: '+playermrks[i].hp;
+        fxhud.appendChild(my2P);
+
+            var mybb = document.createElement('button');
+            mybb.textContent = 'mine';
+            mybb.setAttribute("onclick", "mine(this)");
+            mybb.setAttribute("data-country", playermrks[i].country );
+            mybb.setAttribute("data-hp", playermrks[i].hp );
+            mybb.setAttribute("data-num", playermrks[i].num);
+            fxhud.appendChild(mybb);   
+                }
+}//for
+} else {fxhud.innerHTML =  '';}
+};
+
+
+// show marker info
+function showfxinfo() {
+    for (var i=0; i < playermrks.length; i++) {
+        if (playermrks[i].cx === xu && playermrks[i].cy === xv) {
+            fxhud.innerHTML =  '';
+            var myP = document.createElement('p');
+            myP.textContent = 'name: '+playermrks[i].name;
+            fxhud.appendChild(myP);
+
+            var my2P = document.createElement('p');
+            my2P.id = 'mkhp';
+            my2P.textContent = 'hp: '+playermrks[i].hp;
+            fxhud.appendChild(my2P);
+
+            var mybb = document.createElement('button');
+            mybb.textContent = 'mine';
+            mybb.setAttribute("onclick", "mine(this)");
+            mybb.setAttribute("data-country", playermrks[i].country );
+            mybb.setAttribute("data-hp", playermrks[i].hp );
+            mybb.setAttribute("data-num", playermrks[i].num);
+            fxhud.appendChild(mybb);            
+        }
+    }
+};
+
+// 2D/3D earth texture toggle
+var texbtn = document.getElementById("tex");
+texbtn.addEventListener("click",toggletex, false );
+
+// earth texture function
+function toggletex() {
+    texbtn.classList.toggle('on');
+    if ( texbtn.className != "on") {
+        document.body.className = '';
+        texcol();  
+    } else {
+        texbtn.className = "on";  
+        texbw();
+    }
+};
+
+
+// show 2D earth
+function texbw() {
+    var emg = scene.getObjectByProperty( 'name', 'earthmesh', true ); 
+    emg.visible = false;
+    cursorpvt.visible = false;
+    markers.visible = false;
+}
+
+
+// show 3D earth
+function texcol() {
+    var emg = scene.getObjectByProperty( 'name', 'earthmesh', true ); 
+    emg.visible = true;
+    cursorpvt.visible = true; 
+    markers.visible = true;    
+}
+
+
+// create marker
+function createmarker(){
+    var vector = new THREE.Vector3();
+    vector.setFromMatrixPosition( campoint.matrixWorld );
+    var  worldPosition = vector ;
+    var x = worldPosition.x; var y = worldPosition.y; var z = worldPosition.z;
+    var xcnt = iamhere;
+    fcxData = fcx.getImageData(xu, xv, 1, 1);
+    if (fcxData.data[0] != 0) { caneffect = false; return; } else { 
+        //if myhp is less than the country hp, break
+        if (herehp > myhp || herehp < 1) {console.log('nope'); return;}
+        caneffect = true;     
+        createclone('rain',x,y,z,xu,xv,myhp);
+        playermrks.addElem({
+            num:marknum,
+            hp:1,
+            name:'marker'+marknum,
+            x: x, y: y, z: z,
+            cx:xu, cy:xv,
+            time:i, country:xcnt
+        });
+        marknum += 1;
+        myhp -= 1;
+        xhp.innerHTML = 'myhp: '+myhp;
+        showfxinfo();
+        // console.log(playermrks)
+    }
+}
+
+//playermrks fx array
+var playermrks = {
+    length: 0,
+    addElem: function addElem(elem) {
+        [].push.call(this, elem);
+    }
+};
+
+//create 2D marker pixel / 3D marker
+function createclone(r,x,y,z,cx,cy,hp){
+    if (caneffect === false) {return;}var fxclone = mrkr.clone();
+    fxclone.position.set (x, y, z);
+    fcx.fillStyle = "brown";
+    fxclone.material.color.r=1;
+    fxclone.material.color.g=0;
+    markers.add( fxclone );
+    fcx.fillRect(cx, cy, 1, 1);
+    fxclone.lookAt(scene.position);
+
+};
+
+
+// remove all markers
+function removefx() {
+    for (var i = markers.children.length - 1; i >= 0; i--) {
+        markers.remove(markers.children[i]);
+    }
+    fcx.clearRect(0,0,128,64);
+}
+
+// mine
+function mine(ev) {
+var thiscnt = ev.getAttribute('data-country');
+if (locations[thiscnt].stats.hp === 0) {return;}
+// set country hp if more than 0
+var newhp = locations[thiscnt].stats.hp - ev.getAttribute('data-hp');
+locations[thiscnt].stats.hp = newhp;
+cntryhp.innerHTML = 'hp: '+locations[thiscnt].stats.hp;
+
+//set marker hp >>>> FIX THIS!!!
+var thisnum = ev.getAttribute('data-num');
+for (var i=0; i < playermrks.length; i++) {
+if (playermrks[thisnum].num = thisnum) {
+// playermrks[i].hp = playermrks[i].hp + 1;
+// mkhp.innerHTML = 'hp: '+playermrks[i].hp;
+console.log(thisnum)
+}//if
+}//for
+
+
+}
+
+
+</script>
+
+</body>
+
+</html>	
